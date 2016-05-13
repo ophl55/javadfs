@@ -19,8 +19,34 @@ import java.io.*;
  */
 public class DFSFicheroServImpl extends UnicastRemoteObject implements DFSFicheroServ {
     private static final String DFSDir = "DFSDir/";
+    private RandomAccessFile fichero;
 
-    public DFSFicheroServImpl()
+    public DFSFicheroServImpl(String name, String mode)
       throws RemoteException, FileNotFoundException {
+        fichero = new RandomAccessFile(DFSDir + name, mode);
+        System.out.println("New file created");
+    }
+
+    @Override
+    public byte[] read(byte[] b) throws RemoteException, IOException {
+        return b;
+    }
+
+    @Override
+    public void write(byte[] b) throws RemoteException, IOException {
+        fichero.write(b);
+        System.out.println(b.length + " bytes written");
+    }
+
+    @Override
+    public void seek(long p) throws RemoteException, IOException {
+        fichero.seek(p);
+        System.out.println("Pointer on " + String.valueOf(p));
+    }
+
+    @Override
+    public void close() throws RemoteException, IOException {
+        fichero.close();
+        System.out.println("File closed");
     }
 }
