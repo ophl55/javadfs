@@ -8,5 +8,5 @@ public interface DFSFicheroServ extends Remote  {
     byte[] read(byte[] b) throws RemoteException, IOException;
     void write(byte[] b) throws RemoteException, IOException;
     void seek(long p) throws RemoteException, IOException;
-    void close() throws RemoteException, IOException;
+    long close() throws RemoteException, IOException;
 }

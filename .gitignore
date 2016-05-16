@@ -155,3 +155,8 @@ gradle-app.setting
 
 # # Work around https://youtrack.jetbrains.com/issue/IDEA-116898
 # gradle/wrapper/gradle-wrapper.properties
+
+
+#custom
+*.tar
+src/DATSI/SD/JAVADFS.2015/servidor/DFSDir/*
