@@ -32,8 +32,10 @@ public class DFSFicheroCliente  {
 
         // Check if file consists in cache
         if (dfs.getCacheFicheros().containsKey(nom)){
+            System.out.println("Cache found");
             cache = dfs.getCacheFicheros().get(nom);
         } else {
+            System.out.println("Cache created");
             cache = new Cache(dfs.getTamCache()/dfs.getTamBloque());
             dfs.getCacheFicheros().put(nom, cache);
         }
@@ -64,10 +66,17 @@ public class DFSFicheroCliente  {
         Bloque expulsadoBlock;
 
         for (int i = 0; i < b.length/dfs.getTamBloque(); i++){
+/*
+            System.out.println("should be: " + String.valueOf(pointer/dfs.getTamBloque()));
+            long test = pointer/dfs.getTamBloque();
+            System.out.println("Test 1: " + String.valueOf(test));
+            Long test2 = new Long(pointer/dfs.getTamBloque());
+            System.out.println("Test 2: " + String.valueOf(test2));
+*/
             if(cache.getBloque(pointer/dfs.getTamBloque()) != null){
                 // Block found in cache. Now copy it to buffer.
                 System.out.println("Found block in cache");
-                System.arraycopy(cache.getBloque(pointer).obtenerContenido(), 0, b, i*dfs.getTamBloque(), dfs.getTamBloque());
+                System.arraycopy(cache.getBloque(pointer/dfs.getTamBloque()).obtenerContenido(), 0, b, i*dfs.getTamBloque(), dfs.getTamBloque());
             }
             else {
                 // Block not found in cache. Look it up in the remote file.
@@ -76,9 +85,11 @@ public class DFSFicheroCliente  {
                 ficheroServ.seek(pointer);  // Remote pointer has to be adjusted.
                 readBlock = ficheroServ.read(readBlock);
                 if (readBlock == null)
-                    return -1;
+                    return i * dfs.getTamBloque();
 
                 // Store looked up block in the cache.
+                Bloque bl = new Bloque(pointer/dfs.getTamBloque(), readBlock);
+                System.out.println("new block id:" + String.valueOf(bl.obtenerId()));
                 expulsadoBlock = cache.putBloque(new Bloque(pointer/dfs.getTamBloque(), readBlock));
                 if (expulsadoBlock != null)
                     writeBlock(expulsadoBlock);

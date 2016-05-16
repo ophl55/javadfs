@@ -22,7 +22,7 @@ public class DFSServicioImpl extends UnicastRemoteObject implements DFSServicio 
     }
 
     @Override
-    public FicheroInfo iniciar(String name, String mode) throws IOException {
+    public FicheroInfo iniciar(String name, String mode) throws IOException, FileNotFoundException{
         DFSFicheroServImpl fichero = null;
         long date = -1;
 
@@ -32,24 +32,12 @@ public class DFSServicioImpl extends UnicastRemoteObject implements DFSServicio 
         }
         else {
             // create new file
-
-            // it is not allowed to create a file in "r" mode
-            if (mode.equals("r"))
-                throw new IOException();
-            try {
-                System.out.println("New file: " + name);
-                fichero = new DFSFicheroServImpl(name, mode, this);
-                ficheros.put(name, fichero);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
+            fichero = new DFSFicheroServImpl(name, mode, this);
+            ficheros.put(name, fichero);
+            System.out.println("New file: " + name);
         }
 
-        try {
-            date = fichero.getLastModified();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+        date = fichero.getLastModified();
 
         return new FicheroInfo(fichero, date);
     }
