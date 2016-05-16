@@ -3,6 +3,7 @@
 package dfs;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.rmi.*;
 import java.rmi.server.*;
 import java.util.HashMap;
@@ -11,29 +12,54 @@ import java.util.Map;
 /**
  * DFSServicio: crea/abre fich. y genera ref remota para su acceso
  *
- * TODO: Definición del método para generar referencias remotas DFSFicheroServ.
+ * Definición del método para generar referencias remotas DFSFicheroServ.
  */
 public class DFSServicioImpl extends UnicastRemoteObject implements DFSServicio {
-    private Map<String,DFSFicheroServ> ficheros;
+    private Map<String,DFSFicheroServImpl> ficheros;
 
     public DFSServicioImpl() throws RemoteException {
-        ficheros = new HashMap<String, DFSFicheroServ>();
+        ficheros = new HashMap<String, DFSFicheroServImpl>();
     }
 
     @Override
-    public DFSFicheroServ iniciar(String name, String mode) throws RemoteException {
+    public FicheroInfo iniciar(String name, String mode) throws IOException {
         DFSFicheroServImpl fichero = null;
+        long date = -1;
 
-        if (ficheros.containsKey(name))
-            return ficheros.get(name);
+        if (ficheros.containsKey(name)) {
+            // look up in map
+            fichero = ficheros.get(name);
+        }
+        else {
+            // create new file
+
+            // it is not allowed to create a file in "r" mode
+            if (mode.equals("r"))
+                throw new IOException();
+            try {
+                System.out.println("New file: " + name);
+                fichero = new DFSFicheroServImpl(name, mode, this);
+                ficheros.put(name, fichero);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
 
         try {
-            fichero = new DFSFicheroServImpl(name, mode);
-            System.out.println("New file: " + name);
-            ficheros.put(name, fichero);
+            date = fichero.getLastModified();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        return fichero;
+
+        return new FicheroInfo(fichero, date);
+    }
+
+    /**
+     * Removes the file from the internal storage.
+     *
+     * @param name Filename
+     */
+    public void removeFile(String name){
+        ficheros.remove(name);
     }
 }

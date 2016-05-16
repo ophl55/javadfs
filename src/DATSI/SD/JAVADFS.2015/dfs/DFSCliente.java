@@ -13,10 +13,10 @@ import java.util.Map;
  * DFSCliente: encapsula acceso a rmiregistry y a variables entorno
  * Host y puerto del rmiregistry en variables de entorno
  *
- * TODO Fase 1:
+ * Fase 1:
  * Acceso a las variables de entorno y operación de lookup en el rmiregistry.
  *
- * TODO Fase 2 Etapa 1:
+ * Fase 2 Etapa 1:
  * mantenga algún tipo de contenedor para almacenar las cachés de todos los cacheFicheros accedidos por la aplicación
  * hasta ese instante. Cada vez que se cree un objeto de la clase DFSFicheroCliente,
  * éste deberá comprobar si ya hay una caché para ese fichero. Si la hay, la utilizará. En caso contrario,

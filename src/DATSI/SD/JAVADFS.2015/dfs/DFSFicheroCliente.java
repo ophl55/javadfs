@@ -3,8 +3,6 @@
 package dfs;
 
 import java.io.*;
-import java.net.Authenticator;
-import java.nio.ByteOrder;
 import java.rmi.*;
 
 /**
@@ -17,29 +15,40 @@ import java.rmi.*;
  * explicado en el enunciado de la practica.
  */
 public class DFSFicheroCliente  {
+    private FicheroInfo ficheroInfo;
     private DFSCliente dfs;
     private DFSFicheroServ ficheroServ;
     private Cache cache;
     private long pointer;
+    private String modo;
 
     public DFSFicheroCliente(DFSCliente dfs, String nom, String modo)
       throws RemoteException, IOException, FileNotFoundException {
         this.dfs = dfs;
-        this.ficheroServ = dfs.getSrv().iniciar(nom, modo);
+        this.ficheroInfo = dfs.getSrv().iniciar(nom, modo);
+        this.ficheroServ = ficheroInfo.getFicheroServ();
         this.pointer = 0;
+        this.modo = modo;
 
+        // Check if file consists in cache
         if (dfs.getCacheFicheros().containsKey(nom)){
             cache = dfs.getCacheFicheros().get(nom);
         } else {
             cache = new Cache(dfs.getTamCache()/dfs.getTamBloque());
             dfs.getCacheFicheros().put(nom, cache);
         }
+
+        // If the remote file is newer than the cache -> clear the cache
+        if (cache.obtenerFecha() < ficheroInfo.getDate()){
+            cache.vaciar();
+            System.out.println("Cache cleaned");
+        }
     }
 
     /**
      * reads b.length bytes from remote file.
      *
-     * TODO Fase 2 Etapa 1:
+     * Fase 2 Etapa 1:
      * En cuanto a la operación de lectura, debe descomponer el acceso en bloques y por cada bloque comprobar si está
      * en la caché. En caso negativo, lo solicita al servidor y, una vez obtenido, lo incluye en la caché
      * (nótese que no hace falta comprobar si esa inclusión expulsa algún bloque puesto que asumimos en esta etapa que
@@ -52,9 +61,10 @@ public class DFSFicheroCliente  {
      * @throws IOException
      */
     public int read(byte[] b) throws RemoteException, IOException {
+        Bloque expulsadoBlock;
 
         for (int i = 0; i < b.length/dfs.getTamBloque(); i++){
-            if(cache.getBloque(pointer) != null){
+            if(cache.getBloque(pointer/dfs.getTamBloque()) != null){
                 // Block found in cache. Now copy it to buffer.
                 System.out.println("Found block in cache");
                 System.arraycopy(cache.getBloque(pointer).obtenerContenido(), 0, b, i*dfs.getTamBloque(), dfs.getTamBloque());
@@ -69,7 +79,9 @@ public class DFSFicheroCliente  {
                     return -1;
 
                 // Store looked up block in the cache.
-                cache.putBloque(new Bloque(pointer, readBlock));
+                expulsadoBlock = cache.putBloque(new Bloque(pointer/dfs.getTamBloque(), readBlock));
+                if (expulsadoBlock != null)
+                    writeBlock(expulsadoBlock);
 
                 // Copy block to the buffer.
                 System.arraycopy(readBlock, 0, b, i*dfs.getTamBloque(), dfs.getTamBloque());
@@ -77,19 +89,69 @@ public class DFSFicheroCliente  {
             pointer += dfs.getTamBloque();
         }
 
-        //res = ficheroServ.read(b);
-        //System.arraycopy(res, 0, b, 0, b.length);
         return b.length;
     }
 
     /**
+     * Fase 2 Etapa 2
+     * En cuanto a la propia operación de escritura, deberá descomponer el acceso en bloques e incorporar cada bloque
+     * a la caché (nótese que la restricción de usar sólo operaciones con bloques completos elimina la necesidad de
+     * consultar la caché para saber si el bloque estaba previamente en la misma), marcándolo como modificado.
+     * Cada vez que se incorpora un bloque a la caché, hay que comprobar si otro bloque ha sido expulsado y,
+     * en caso afirmativo, si dicho bloque estaba modificado, puesto que en ese caso hay que enviarlo al servidor y
+     * ponerlo como no modificado. Nótese que habría que hacer lo mismo al incorporar bloques en la caché como parte
+     * de la operación de lectura, descrita en la etapa previa.
+     *
+     * Fase 2 Etapa 2
+     * Obsérvese que con este esquema de escritura diferida, si una aplicación abre un fichero sólo para leer y
+     * escribe en el mismo, el error sólo se detectará cuando se vuelque un bloque al servidor, ya sea por expulsión o
+     * en el cierre del fichero. Para conseguir un comportamiento tal que el error se detecte en la primera operación
+     * de escritura, que es el que va a requerir este proyecto práctico, la clase DFSFicheroCliente debe encargarse
+     * de detectar este error y generar una excepción (IOException).
+     *
+     * Fase 2 Etapa 2
+     * Como se comentó en la etapa previa, es válida una solución que envíe al servidor los bloques a escribir de
+     * forma individual, aunque sería más eficiente una alternativa que permitiera escribir múltiples bloques con una
+     * única operación.
      *
      * @param b
      * @throws RemoteException
      * @throws IOException
      */
     public void write(byte[] b) throws RemoteException, IOException {
-        ficheroServ.write(b);
+        Bloque newBlock, expulsadoBlock;
+
+        for (int i = 0; i < b.length/dfs.getTamBloque(); i++) {
+            byte [] content = new byte[dfs.getTamBloque()];
+            System.arraycopy(b, i, content, 0, dfs.getTamBloque());
+            newBlock = new Bloque(pointer/dfs.getTamBloque(), content);
+            expulsadoBlock = cache.putBloque(newBlock);
+            cache.activarMod(newBlock);
+
+            // treat the block that was replaced from cache
+            if (expulsadoBlock != null)
+                writeBlock(expulsadoBlock);
+
+            pointer += dfs.getTamBloque();
+        }
+     }
+
+    /**
+     * Helper function to write a block in the remote file to the right position.
+     * Only writes the block, if the block is marked as modified in the cache.
+     *
+     * @param b Block to write
+     * @throws RemoteException
+     * @throws IOException
+     */
+    private void writeBlock(Bloque b) throws RemoteException, IOException {
+        if (modo.equals("r"))
+            throw new IOException();
+
+        if(cache.preguntarYDesactivarMod(b)){
+            ficheroServ.seek(b.obtenerId() * dfs.getTamBloque());
+            ficheroServ.write(b.obtenerContenido());
+        }
     }
 
     /**
@@ -104,11 +166,19 @@ public class DFSFicheroCliente  {
     }
 
     /**
+     * Fase 2 Etapa 2
+     * deberá enviar todos los bloques modificados al servidor para que los escriba en el fichero, quedando todos
+     * ellos como no modificados en la caché.
      *
      * @throws RemoteException
      * @throws IOException
      */
     public void close() throws RemoteException, IOException {
-        ficheroServ.close();
+        // write all modified marked blocks to remote file
+        for (Bloque b : cache.listaMod()){
+            writeBlock(b);
+        }
+        cache.vaciarListaMod(); // clears the list that holds modified blocks
+        cache.fijarFecha(ficheroServ.close()); // store the lastModified date of the remote file for coherence issues
     }
 }

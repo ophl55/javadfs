@@ -15,14 +15,19 @@ import java.io.*;
  *
  * cada objeto DFSFicheroServ almacenaría internamente un objeto RandomAccessFile.
  *
- * TODO: Invocación de los métodos correspondientes del objeto RandomAccessFile que almacena internamente.
+ * Invocación de los métodos correspondientes del objeto RandomAccessFile que almacena internamente.
  */
 public class DFSFicheroServImpl extends UnicastRemoteObject implements DFSFicheroServ {
     private static final String DFSDir = "DFSDir/";
     private RandomAccessFile fichero;
+    private String name, mode;
+    private DFSServicioImpl servicio;
 
-    public DFSFicheroServImpl(String name, String mode)
+    public DFSFicheroServImpl(String name, String mode, DFSServicioImpl servicio)
       throws RemoteException, FileNotFoundException {
+        this.name = name;
+        this.mode = mode;
+        this.servicio = servicio;
         fichero = new RandomAccessFile(DFSDir + name, mode);
         System.out.println("New file created");
     }
@@ -51,8 +56,23 @@ public class DFSFicheroServImpl extends UnicastRemoteObject implements DFSFicher
     }
 
     @Override
-    public void close() throws RemoteException, IOException {
+    public long close() throws RemoteException, IOException {
+        servicio.removeFile(name);
         fichero.close();
         System.out.println("File closed");
+        return getLastModified();
+    }
+
+    /**
+     * Helper function to get the date of the last modification of a file.
+     *
+     * @return Date
+     * @throws FileNotFoundException
+     */
+    public long getLastModified() throws FileNotFoundException {
+        File file = new File(DFSDir + name);
+        long lastModified = file.lastModified();
+        System.out.println("last modified: " + String.valueOf(lastModified));
+        return lastModified;
     }
 }
