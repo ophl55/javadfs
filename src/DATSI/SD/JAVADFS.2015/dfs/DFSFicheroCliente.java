@@ -36,7 +36,7 @@ public class DFSFicheroCliente  {
             cache = dfs.getCacheFicheros().get(nom);
         } else {
             System.out.println("Cache created");
-            cache = new Cache(dfs.getTamCache()/dfs.getTamBloque());
+            cache = new Cache(dfs.getTamCache());
             dfs.getCacheFicheros().put(nom, cache);
         }
 
@@ -66,14 +66,7 @@ public class DFSFicheroCliente  {
         Bloque expulsadoBlock;
 
         for (int i = 0; i < b.length/dfs.getTamBloque(); i++){
-/*
-            System.out.println("should be: " + String.valueOf(pointer/dfs.getTamBloque()));
-            long test = pointer/dfs.getTamBloque();
-            System.out.println("Test 1: " + String.valueOf(test));
-            Long test2 = new Long(pointer/dfs.getTamBloque());
-            System.out.println("Test 2: " + String.valueOf(test2));
-*/
-            if(cache.getBloque(pointer/dfs.getTamBloque()) != null){
+           if(cache.getBloque(pointer/dfs.getTamBloque()) != null){
                 // Block found in cache. Now copy it to buffer.
                 System.out.println("Found block in cache");
                 System.arraycopy(cache.getBloque(pointer/dfs.getTamBloque()).obtenerContenido(), 0, b, i*dfs.getTamBloque(), dfs.getTamBloque());
@@ -88,8 +81,6 @@ public class DFSFicheroCliente  {
                     return i * dfs.getTamBloque();
 
                 // Store looked up block in the cache.
-                Bloque bl = new Bloque(pointer/dfs.getTamBloque(), readBlock);
-                System.out.println("new block id:" + String.valueOf(bl.obtenerId()));
                 expulsadoBlock = cache.putBloque(new Bloque(pointer/dfs.getTamBloque(), readBlock));
                 if (expulsadoBlock != null)
                     writeBlock(expulsadoBlock);
@@ -131,10 +122,12 @@ public class DFSFicheroCliente  {
      */
     public void write(byte[] b) throws RemoteException, IOException {
         Bloque newBlock, expulsadoBlock;
+        if (modo.equals("r"))
+            throw new IOException();
 
         for (int i = 0; i < b.length/dfs.getTamBloque(); i++) {
             byte [] content = new byte[dfs.getTamBloque()];
-            System.arraycopy(b, i, content, 0, dfs.getTamBloque());
+            System.arraycopy(b, i*dfs.getTamBloque(), content, 0, dfs.getTamBloque());
             newBlock = new Bloque(pointer/dfs.getTamBloque(), content);
             expulsadoBlock = cache.putBloque(newBlock);
             cache.activarMod(newBlock);
@@ -156,8 +149,9 @@ public class DFSFicheroCliente  {
      * @throws IOException
      */
     private void writeBlock(Bloque b) throws RemoteException, IOException {
-        if (modo.equals("r"))
-            throw new IOException();
+        /*if (modo.equals("r"))
+            return;
+          */  //throw new IOException();
 
         if(cache.preguntarYDesactivarMod(b)){
             ficheroServ.seek(b.obtenerId() * dfs.getTamBloque());
