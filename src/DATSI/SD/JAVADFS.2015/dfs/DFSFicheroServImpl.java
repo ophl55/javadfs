@@ -33,7 +33,7 @@ public class DFSFicheroServImpl extends UnicastRemoteObject implements DFSFicher
     }
 
     @Override
-    public byte[] read(byte[] b) throws RemoteException, IOException {
+    public synchronized byte[] read(byte[] b) throws RemoteException, IOException {
         if (fichero.read(b) < 0) {
             System.out.println("Error in read");
             return null;
@@ -44,19 +44,19 @@ public class DFSFicheroServImpl extends UnicastRemoteObject implements DFSFicher
     }
 
     @Override
-    public void write(byte[] b) throws RemoteException, IOException {
+    public synchronized void write(byte[] b) throws RemoteException, IOException {
         fichero.write(b);
         System.out.println(b.length + " bytes written");
     }
 
     @Override
-    public void seek(long p) throws RemoteException, IOException {
+    public synchronized void seek(long p) throws RemoteException, IOException {
         fichero.seek(p);
         System.out.println("Pointer on " + String.valueOf(p));
     }
 
     @Override
-    public long close() throws RemoteException, IOException {
+    public synchronized long close() throws RemoteException, IOException {
         servicio.removeFile(name);
         fichero.close();
         System.out.println("File closed");
@@ -69,7 +69,7 @@ public class DFSFicheroServImpl extends UnicastRemoteObject implements DFSFicher
      * @return Date
      * @throws FileNotFoundException
      */
-    public long getLastModified() throws FileNotFoundException {
+    public synchronized long getLastModified() throws FileNotFoundException {
         File file = new File(DFSDir + name);
         long lastModified = file.lastModified();
         System.out.println("last modified: " + String.valueOf(lastModified));

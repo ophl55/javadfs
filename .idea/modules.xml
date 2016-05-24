@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/javadfs.iml" filepath="$PROJECT_DIR$/javadfs.iml" />
+      <module fileurl="file://$PROJECT_DIR$/src/DATSI/SD/JAVADFS.2015/JAVADFS.2015.iml" filepath="$PROJECT_DIR$/src/DATSI/SD/JAVADFS.2015/JAVADFS.2015.iml" />
     </modules>
   </component>
 </project>

@@ -16,13 +16,14 @@ import java.util.Map;
  */
 public class DFSServicioImpl extends UnicastRemoteObject implements DFSServicio {
     private Map<String,DFSFicheroServImpl> ficheros;
+    private static final long serialVersionUID = 1L;
 
     public DFSServicioImpl() throws RemoteException {
         ficheros = new HashMap<String, DFSFicheroServImpl>();
     }
 
     @Override
-    public FicheroInfo iniciar(String name, String mode) throws IOException, FileNotFoundException{
+    public synchronized FicheroInfo iniciar(String name, String mode) throws IOException, FileNotFoundException{
         DFSFicheroServImpl fichero = null;
         long date = -1;
 
@@ -47,7 +48,7 @@ public class DFSServicioImpl extends UnicastRemoteObject implements DFSServicio 
      *
      * @param name Filename
      */
-    public void removeFile(String name){
+    public synchronized void removeFile(String name){
         ficheros.remove(name);
     }
 }
