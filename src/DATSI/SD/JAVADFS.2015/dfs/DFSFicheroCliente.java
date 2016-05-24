@@ -50,6 +50,26 @@ public class DFSFicheroCliente  {
     }
 
     /**
+     *
+     * @throws RemoteException
+     */
+    public synchronized void useCache() throws RemoteException{
+
+    }
+
+    /**
+     *
+     * @throws RemoteException
+     * @throws IOException
+     */
+    public synchronized void invalidCache() throws RemoteException, IOException{
+
+    }
+
+
+
+
+    /**
      * reads b.length bytes from remote file.
      *
      * Fase 2 Etapa 1:

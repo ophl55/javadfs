@@ -7,7 +7,7 @@ import java.rmi.*;
 public interface DFSFicheroCallback extends Remote  {
 
     /**
-     * uses Cache 
+     * uses Cache
      * @throws RemoteException
      */
     public void useCache() throws RemoteException;
