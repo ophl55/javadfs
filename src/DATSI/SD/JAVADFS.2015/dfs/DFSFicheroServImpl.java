@@ -18,6 +18,7 @@ import java.io.*;
  * Invocación de los métodos correspondientes del objeto RandomAccessFile que almacena internamente.
  */
 public class DFSFicheroServImpl extends UnicastRemoteObject implements DFSFicheroServ {
+    private static final long serialVersionUID = 1L;
     private static final String DFSDir = "DFSDir/";
     private RandomAccessFile fichero;
     private String name, mode;
