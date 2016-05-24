@@ -21,7 +21,12 @@ public class DFSFicheroCliente  {
     private Cache cache;
     private long pointer;
     private String modo;
-    private boolean used;//indicate that file is open and used at the moment
+
+    private boolean opened;//ndicate that file is open and used at the moment
+    private String name;
+    private boolean useCache;
+    private int blocksize;
+    private Double user;
 
     public DFSFicheroCliente(DFSCliente dfs, String nom, String modo)
       throws RemoteException, IOException, FileNotFoundException {
@@ -30,7 +35,10 @@ public class DFSFicheroCliente  {
         this.ficheroServ = ficheroInfo.getFicheroServ();
         this.pointer = 0;
         this.modo = modo;
-        this.used = true;
+        this.opened = true;
+        this.name = nom;
+        this.blocksize = dfs.getTamBloque();
+        this.user = Math.random();
 
         // Check if file consists in cache
         if (dfs.getCacheFicheros().containsKey(nom)){
@@ -54,6 +62,11 @@ public class DFSFicheroCliente  {
      * @throws RemoteException
      */
     public synchronized void useCache() throws RemoteException{
+        this.cache = this.dfs.getCachebyFilename(name);
+        if(cache.obtenerFecha() < ficheroInfo.getDate())
+            cache.vaciar();
+
+        useCache = true;
 
     }
 
@@ -63,9 +76,32 @@ public class DFSFicheroCliente  {
      * @throws IOException
      */
     public synchronized void invalidCache() throws RemoteException, IOException{
+        if(cache != null){
+            if (modo.contains("w"))
+                overthrowCache();
+
+            useCache = false;
+        }
 
     }
 
+    /**
+     *
+     * @throws RemoteException
+     * @throws IOException
+     */
+    private void overthrowCache() throws RemoteException, IOException{
+        if(useCache){
+            for(Bloque blo : cache.listaMod()){
+                overwrite(blo.obtenerContenido(), blo.obtenerId() * blocksize);
+                cache.desactivarMod(blo);
+            }
+        }
+    }
+    private void overwrite(byte[] info, long startp) throws IOException{
+        ficheroServ.seek(startp);
+        ficheroServ.write(info,user);
+    }
 
 
 
@@ -218,7 +254,7 @@ public class DFSFicheroCliente  {
         }
         cache.vaciarListaMod(); // clears the list that holds modified blocks
         cache.fijarFecha(ficheroServ.close()); // store the lastModified date of the remote file for coherence issues
-        this.used = false;
+        this.opened = false;
     }
 
     /**
@@ -226,7 +262,7 @@ public class DFSFicheroCliente  {
      * @return true if file is used, false otherwise
      */
     private boolean isUsed(){
-        return this.used;
+        return this.opened;
     }
 
     /**

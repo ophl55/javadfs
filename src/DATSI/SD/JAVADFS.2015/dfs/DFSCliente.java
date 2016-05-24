@@ -77,5 +77,9 @@ public class DFSCliente {
     public void setTamCache(int tamCache) {
         this.tamCache = tamCache;
     }
+
+    public Cache getCachebyFilename(String name){
+        return this.cacheFicheros.get(name);
+    }
 }
 
