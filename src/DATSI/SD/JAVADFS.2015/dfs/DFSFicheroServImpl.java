@@ -82,7 +82,7 @@ public class DFSFicheroServImpl extends UnicastRemoteObject implements DFSFicher
         if (fichero.read(b) < 0) {
             System.out.println("Error in read");
             return null;
-        }   
+        }
 
         System.out.println(b.length + " bytes read");
         return b;

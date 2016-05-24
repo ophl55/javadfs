@@ -219,7 +219,7 @@ public class DFSFicheroCliente  {
 
         if(cache.preguntarYDesactivarMod(b)){
             ficheroServ.seek(b.obtenerId() * dfs.getTamBloque());
-            ficheroServ.write(b.obtenerContenido());
+            ficheroServ.write(b.obtenerContenido(),user);
         }
     }
 

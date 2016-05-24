@@ -79,7 +79,15 @@ public class DFSCliente {
     }
 
     public Cache getCachebyFilename(String name){
-        return this.cacheFicheros.get(name);
+        Cache resp = null;
+        if (!cacheFicheros.containsKey(name)) {
+            resp = new Cache(tamCache);
+            cacheFicheros.put(name, resp);
+        } else
+            resp = cacheFicheros.get(name);
+        return resp;
     }
+
+
 }
 
