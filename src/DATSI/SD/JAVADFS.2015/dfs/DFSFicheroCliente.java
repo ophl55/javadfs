@@ -21,6 +21,7 @@ public class DFSFicheroCliente  {
     private Cache cache;
     private long pointer;
     private String modo;
+    private boolean used;//indicate that file is open and used at the moment
 
     public DFSFicheroCliente(DFSCliente dfs, String nom, String modo)
       throws RemoteException, IOException, FileNotFoundException {
@@ -29,6 +30,7 @@ public class DFSFicheroCliente  {
         this.ficheroServ = ficheroInfo.getFicheroServ();
         this.pointer = 0;
         this.modo = modo;
+        this.used = true;
 
         // Check if file consists in cache
         if (dfs.getCacheFicheros().containsKey(nom)){
@@ -64,6 +66,9 @@ public class DFSFicheroCliente  {
      */
     public int read(byte[] b) throws RemoteException, IOException {
         Bloque expulsadoBlock;
+
+        if(!isUsed())
+            throw new IOException();
 
         for (int i = 0; i < b.length/dfs.getTamBloque(); i++){
            if(cache.getBloque(pointer/dfs.getTamBloque()) != null){
@@ -121,6 +126,9 @@ public class DFSFicheroCliente  {
      * @throws IOException
      */
     public void write(byte[] b) throws RemoteException, IOException {
+        if(!isUsed() || !canWrite())
+            throw new IOException();
+
         Bloque newBlock, expulsadoBlock;
         if (modo.equals("r"))
             throw new IOException();
@@ -167,6 +175,9 @@ public class DFSFicheroCliente  {
      */
     public void seek(long p) throws RemoteException, IOException {
         //ficheroServ.seek(p);
+        if(!isUsed())
+            throw new IOException();
+
         pointer = p;
     }
 
@@ -179,11 +190,30 @@ public class DFSFicheroCliente  {
      * @throws IOException
      */
     public void close() throws RemoteException, IOException {
+        if(!isUsed())
+            throw new IOException();
         // write all modified marked blocks to remote file
         for (Bloque b : cache.listaMod()){
             writeBlock(b);
         }
         cache.vaciarListaMod(); // clears the list that holds modified blocks
         cache.fijarFecha(ficheroServ.close()); // store the lastModified date of the remote file for coherence issues
+        this.used = false;
+    }
+
+    /**
+     *
+     * @return true if file is used, false otherwise
+     */
+    private boolean isUsed(){
+        return this.used;
+    }
+
+    /**
+     *
+     * @return true if client is allowed to write, false otherwise
+     */
+    private boolean canWrite(){
+        return modo.contains("w");
     }
 }
