@@ -27,6 +27,7 @@ public class DFSFicheroCliente  {
     private boolean useCache;
     private int blocksize;
     private Double user;
+    private DFSFicheroCallback usingCache;
 
     public DFSFicheroCliente(DFSCliente dfs, String nom, String modo)
       throws RemoteException, IOException, FileNotFoundException {
@@ -39,6 +40,8 @@ public class DFSFicheroCliente  {
         this.name = nom;
         this.blocksize = dfs.getTamBloque();
         this.user = Math.random();
+        this.usingCache = new DFSFicheroCallbackImpl(this);
+        ficheroServ.addUser(user,modo,usingCache);
 
         // Check if file consists in cache
         if (dfs.getCacheFicheros().containsKey(nom)){

@@ -10,4 +10,5 @@ public interface DFSFicheroServ extends Remote  {
     void write(byte[] b) throws RemoteException, IOException;
     void seek(long p) throws RemoteException, IOException;
     long close() throws RemoteException, IOException;
+    void addUser(Double user, String mode, DFSFicheroCallback callback) throws IOException;
 }

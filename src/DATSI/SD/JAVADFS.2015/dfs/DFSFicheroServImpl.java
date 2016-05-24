@@ -46,7 +46,7 @@ public class DFSFicheroServImpl extends UnicastRemoteObject implements DFSFicher
         fichero = new RandomAccessFile(DFSDir + name, mode);
         System.out.println("New file created");
     }
-    void addUser(Double user, String mode, DFSFicheroCallback callback) throws IOException{
+    public void addUser(Double user, String mode, DFSFicheroCallback callback) throws IOException{
         if(!mode.contains("w")) {
             if (writeUser.isEmpty()) {
                 callback.useCache();
