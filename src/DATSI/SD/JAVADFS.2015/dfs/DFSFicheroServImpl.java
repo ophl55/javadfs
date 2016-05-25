@@ -50,7 +50,7 @@ public class DFSFicheroServImpl extends UnicastRemoteObject implements DFSFicher
         if(!mode.contains("w")) {
             if (writeUser.isEmpty()) {
                 callback.useCache();
-                //addclient(callback);
+                addclient(callback);
             } else {
                 for (DFSFicheroCallback c : usingCache) {
                     c.invalidCache();
@@ -62,7 +62,7 @@ public class DFSFicheroServImpl extends UnicastRemoteObject implements DFSFicher
         } else{
             if(writeUser.isEmpty() && readUser.isEmpty()){
                 callback.useCache();
-                //addclient(callback)
+                addclient(callback);
             }
             else{
                 for(DFSFicheroCallback c : usingCache){
