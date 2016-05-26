@@ -24,8 +24,6 @@ public class DFSFicheroCliente  {
 
     private boolean opened;//ndicate that file is open and used at the moment
     private String name;
-    private boolean useCache;
-    private int blocksize;
     private Double user;
     private DFSFicheroCallback usingCache;
 
@@ -38,10 +36,10 @@ public class DFSFicheroCliente  {
         this.modo = modo;
         this.opened = true;
         this.name = nom;
-        this.blocksize = dfs.getTamBloque();
         this.user = Math.random();
         this.usingCache = new DFSFicheroCallbackImpl(this);
         ficheroServ.addUser(user,modo,usingCache);
+        System.out.println("ENTRANCE IN DFSFICHEROCLIENTE");
 
         // Check if file consists in cache
         if (dfs.getCacheFicheros().containsKey(nom)){
@@ -59,6 +57,7 @@ public class DFSFicheroCliente  {
             System.out.println("Cache cleaned");
         }
 
+
     }
 
     /**
@@ -70,7 +69,6 @@ public class DFSFicheroCliente  {
         if(cache.obtenerFecha() < ficheroInfo.getDate())
             cache.vaciar();
 
-        useCache = true;
 
     }
 
@@ -84,7 +82,7 @@ public class DFSFicheroCliente  {
             if (modo.contains("w"))
                 overthrowCache();
 
-            useCache = false;
+
         }
 
     }
@@ -95,17 +93,19 @@ public class DFSFicheroCliente  {
      * @throws IOException
      */
     private void overthrowCache() throws RemoteException, IOException{
-        if(useCache){
-            for(Bloque blo : cache.listaMod()){
-                overwrite(blo.obtenerContenido(), blo.obtenerId() * blocksize);
-                cache.desactivarMod(blo);
-            }
+        cache.vaciar();
+        for(Bloque blo : cache.listaMod()){
+            //overwrite(blo.obtenerContenido(), blo.obtenerId() * blocksize);
+            cache.desactivarMod(blo);
         }
+
     }
+
+    /*
     private void overwrite(byte[] info, long startp) throws IOException{
         ficheroServ.seek(startp);
         ficheroServ.write(info,user);
-    }
+    }*/
 
 
 
@@ -141,7 +141,7 @@ public class DFSFicheroCliente  {
                 System.out.println("Request block from server");
                 byte [] readBlock = new byte[dfs.getTamBloque()];
                 ficheroServ.seek(pointer);  // Remote pointer has to be adjusted.
-                readBlock = ficheroServ.read(readBlock);
+                readBlock = ficheroServ.read(readBlock,user);
                 if (readBlock == null)
                     return i * dfs.getTamBloque();
 
@@ -257,7 +257,7 @@ public class DFSFicheroCliente  {
             writeBlock(b);
         }
         cache.vaciarListaMod(); // clears the list that holds modified blocks
-        cache.fijarFecha(ficheroServ.close()); // store the lastModified date of the remote file for coherence issues
+        cache.fijarFecha(ficheroServ.close(user)); // store the lastModified date of the remote file for coherence issues
         this.opened = false;
     }
 
